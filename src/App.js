@@ -1,13 +1,12 @@
-
-
-// export default App;
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './App.css'; // Create this file for custom styles
 
 function App() {
   const [coinBalance, setCoinBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   // Function to get the Telegram ID from the URL query parameters
   const getTelegramIdFromUrl = () => {
@@ -23,7 +22,11 @@ function App() {
       const fetchCoinBalance = async () => {
         try {
           const response = await axios.get(`${API_URL}/api/user/${telegramId}`);
-          setCoinBalance(response.data.coinBalance);
+          if (response.status === 404) {
+            setError('User not found.');
+          } else {
+            setCoinBalance(response.data.coinBalance);
+          }
         } catch (error) {
           setError('Error fetching coin balance.');
           console.error('Error fetching coin balance:', error);
@@ -42,6 +45,8 @@ function App() {
     try {
       const response = await axios.put(`${API_URL}/api/user/${telegramId}`);
       setCoinBalance(response.data.coinBalance);
+      setSuccess('Coin balance updated successfully!');
+      setTimeout(() => setSuccess(null), 3000); // Clear success message after 3 seconds
     } catch (error) {
       setError('Error incrementing coin balance.');
       console.error('Error incrementing coin balance:', error);
@@ -53,14 +58,21 @@ function App() {
   }
 
   if (error) {
-    return <div className="App"><p>{error}</p></div>;
+    return <div className="App error"><p>{error}</p></div>;
   }
 
   return (
     <div className="App">
       <h1>TapMe Game</h1>
-      <p>Coins: {coinBalance}</p>
-      <button onClick={handleTap}>Tap to Earn Coins</button>
+      {telegramId ? (
+        <>
+          <p>Coins: {coinBalance}</p>
+          <button onClick={handleTap}>Tap to Earn Coins</button>
+          {success && <p className="success">{success}</p>}
+        </>
+      ) : (
+        <p>Error: Telegram ID not found.</p>
+      )}
     </div>
   );
 }
